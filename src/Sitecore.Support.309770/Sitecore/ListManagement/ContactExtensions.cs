@@ -1,5 +1,5 @@
 ﻿
-namespace Sitecore.ListManagement
+namespace Sitecore.Support.ListManagement
 {
   using Sitecore.Analytics.Data;
   using Sitecore.Analytics.DataAccess;
@@ -15,20 +15,7 @@ namespace Sitecore.ListManagement
 
   public static class ContactExtensions
   {
-    public static int AddContactToList(ContactRepositoryBase contactRepository, ID contactId, Guid listId)
-    {
-      Assert.ArgumentNotNull(contactRepository, "contactRepository");
-      Assert.ArgumentNotNull(contactId, "contactId");
-      Assert.ArgumentCondition(listId != Guid.Empty, "listId", "Value cannot be empty Guid.\r\nParameter name: contactId");
-      MethodInfo method = contactRepository.GetType().GetMethod("InternalAddContactToList", BindingFlags.NonPublic | BindingFlags.Instance);
-      if (method == null)
-      {
-        return -1;
-      }
-      object[] parameters = new object[] { contactId, listId };
-      return (int)method.Invoke(contactRepository, parameters);
-    }
-
+    
     public static bool AddTagToContact(this ContactContext contact, ContactRepositoryBase contactRepository, string tagName, string tagValue, bool isMerge = false, string suffixDelimiter = "", string suffix = "")
     {
       Assert.ArgumentNotNull(contact, "contact");
@@ -64,71 +51,23 @@ namespace Sitecore.ListManagement
       }
       if (flag)
       {
-        if (contact2 != null)
-        {
-          ID id;
-          if (ID.TryParse(tagValue, out id) && (AddContactToList(contactRepository, ID.Parse(contact.ContactId), id.Guid) != 0))
-          {
-            flag = false;
-          }
-          return flag;
-        }
+        #region ---------------- Changes Start ------------------------
+       // if (contact2 != null)
+        //{
+          //ID id;
+          //if (ID.TryParse(tagValue, out id) && (AddContactToList(contactRepository, ID.Parse(contact.ContactId), id.Guid) != 0))
+          //{
+          //  flag = false;
+          //}
+          //return flag;
+
+       // }
         contactRepository.SaveContact(contact, new ContactSaveOptions(false, null, null));
+
+        #endregion ---------------- Changes End ------------------------
       }
       return flag;
     }
-
-    public static int RemoveContactFromList(ContactRepositoryBase contactRepository, ID contactId, Guid listId)
-    {
-      Assert.ArgumentNotNull(contactRepository, "contactRepository");
-      Assert.ArgumentNotNull(contactId, "contactId");
-      Assert.ArgumentCondition(listId != Guid.Empty, "listId", "Value cannot be empty Guid.\r\nParameter name: contactId");
-      MethodInfo method = contactRepository.GetType().GetMethod("InternalRemoveContactFromList", BindingFlags.NonPublic | BindingFlags.Instance);
-      if (method == null)
-      {
-        return -1;
-      }
-      object[] parameters = new object[] { contactId, listId };
-      return (int)method.Invoke(contactRepository, parameters);
-    }
-
-    public static bool RemoveTagFromContact(this ContactContext contact, ContactRepositoryBase contactRepository, string tagName, string tagValue, bool isMerge = false)
-    {
-      ID id;
-      Assert.ArgumentNotNull(contact, "contact");
-      Assert.ArgumentNotNull(contactRepository, "contactRepository");
-      Assert.ArgumentNotNull(tagName, "tagName");
-      Assert.ArgumentNotNull(tagValue, "tagValue");
-      bool flag = false;
-      if (isMerge)
-      {
-        Sitecore.Analytics.Tracking.Contact contact2 = contactRepository.LoadContactReadOnly(contact.ContactId);
-        if (contact2 != null)
-        {
-          contactRepository.MergeContacts(contact, contact2);
-        }
-      }
-      if (contact.Tags.GetAll(tagName).Any<string>(t => t == tagValue))
-      {
-        ITag tag = contact.Tags.Find(tagName);
-        if (tag != null)
-        {
-          for (int i = 0; i < tag.Values.Count; i++)
-          {
-            if (tag.Values[i].Value == tagValue)
-            {
-              tag.Values.Remove(i);
-              flag = true;
-              i--;
-            }
-          }
-        }
-      }
-      if ((flag && ID.TryParse(tagValue, out id)) && (RemoveContactFromList(contactRepository, ID.Parse(contact.ContactId), id.Guid) != 0))
-      {
-        flag = false;
-      }
-      return flag;
-    }
+    
   }
 }
